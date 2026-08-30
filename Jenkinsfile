@@ -1,24 +1,30 @@
-pipeline {
+   pipeline {
     agent any
 
     stages {
 
         stage('Build') {
             steps {
-                echo 'Building application'
+                sh 'echo "Building on Jenkins Agent"'
+                sh 'java --version'
+                sh 'git --version'
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Running tests'
+                sh 'echo "Running tests on Jenkins Agent"'
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Deploying application'
+                sh 'echo "Deploying from Jenkins Agent"'
             }
         }
     }
 }
+
+        
+            
+                
