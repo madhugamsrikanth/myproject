@@ -1,4 +1,4 @@
-   pipeline {
+pipeline{
     agent any
 
     stages {
@@ -13,7 +13,7 @@
 
         stage('Test') {
             steps {
-                sh 'echo "Running tests on Jenkins Agent"'
+                sh 'python3 test.py'
             }
         }
 
