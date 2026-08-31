@@ -1,11 +1,18 @@
 pipeline{
     agent any
 
+    environment{
+	APP_NAME='myproject'
+	ENV='dev'
+
+}
+
     stages {
 
         stage('Build') {
             steps {
-                sh 'echo "Building on Jenkins Agent"'
+                sh 'echo "Building $APP_NAME"'
+		sh 'echo "Environment $ENV" '
                 sh 'java --version'
                 sh 'git --version'
             }
@@ -19,7 +26,7 @@ pipeline{
 
         stage('Deploy') {
             steps {
-                sh 'echo "Deploying from Jenkins Agent"'
+                sh 'echo "Deploying $APP_NAME to $ENV"'
             }
         }
     }
