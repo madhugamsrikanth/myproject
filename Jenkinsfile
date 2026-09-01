@@ -24,6 +24,12 @@ pipeline{
                 sh 'python3 test.py'
             }
         }
+	stage('Docker Build') {
+    steps {
+	sh 'docker --version'
+        sh 'docker build -t myproject .'
+    }
+}
 	stage('Credentials Test'){
 		steps{
 			sh 'echo "username is:$DEMO_CREDS_USR" '
