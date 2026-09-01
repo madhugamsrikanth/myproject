@@ -30,6 +30,12 @@ pipeline{
         sh 'docker build -t myproject .'
     }
 }
+	stage('Docker run'){
+	steps{
+		sh 'docker run -rm myproject'
+		}
+
+	}
 	stage('Credentials Test'){
 		steps{
 			sh 'echo "username is:$DEMO_CREDS_USR" '
