@@ -32,7 +32,7 @@ pipeline{
 }
 	stage('Docker run'){
 	steps{
-		sh 'docker run -rm myproject'
+		sh 'docker run --rm myproject'
 		}
 
 	}
