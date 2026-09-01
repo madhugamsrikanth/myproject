@@ -4,7 +4,7 @@ pipeline{
     environment{
 	APP_NAME='myproject'
 	ENV='dev'
-	DEMO_CREDS=credentials('demo-credential')
+	DEMO_CREDS=credentials('demo-credentials')
 
 }
 
