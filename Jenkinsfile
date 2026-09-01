@@ -4,7 +4,6 @@ pipeline{
     environment{
 	APP_NAME='myproject'
 	ENV='dev'
-	DEMO_CREDS=credentials('demo-credentials')
 
 }
 
@@ -52,13 +51,6 @@ stage('Docker Push') {
 		}
 
 	}
-	stage('Credentials Test'){
-		steps{
-			sh 'echo "username is:$DEMO_CREDS_USR" '
-			sh 'echo "password is:$DEMO_CREDS_PSW" '
-	}
-
-}
 
         stage('Deploy') {
             steps {
