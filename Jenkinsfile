@@ -30,6 +30,22 @@ pipeline{
         sh 'docker build -t myproject .'
     }
 }
+stage('Docker Push') {
+    steps {
+        withCredentials([usernamePassword(
+            credentialsId: 'docker-hub-creds',
+            usernameVariable: 'DOCKER_USERNAME',
+            passwordVariable: 'DOCKER_PASSWORD'
+        )]) {
+            sh '''
+                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                docker tag myproject:latest $DOCKER_USERNAME/myproject:latest
+                docker push $DOCKER_USERNAME/myproject:latest
+                docker logout
+            '''
+        }
+    }
+}
 	stage('Docker run'){
 	steps{
 		sh 'docker run --rm myproject'
