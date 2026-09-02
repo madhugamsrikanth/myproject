@@ -64,6 +64,9 @@ stage('Docker Push') {
               myproject
         '''
     }
+
+}
+}
 }
         
             
