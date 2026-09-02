@@ -1,3 +1,25 @@
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+
 def add(a, b):
     return a + b
-# Jenkins CI test
+
+
+class MyHandler(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+
+        self.wfile.write(b"<h1>MyProject is running!</h1>")
+        self.wfile.write(b"<p>Deployed using Jenkins and Docker.</p>")
+
+
+if __name__ == "__main__":
+    server = HTTPServer(("0.0.0.0", 5001), MyHandler)
+
+    print("MyProject server is running on port 5001")
+
+    server.serve_forever()
+
