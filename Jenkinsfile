@@ -10,18 +10,20 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'echo "Building $APP_NAME"'
-                sh 'echo "Environment $ENV"'
-                sh 'java --version'
-                sh 'git --version'
-                sh 'python3 --version'
+                sh '''
+                    echo "Building $APP_NAME"
+                    echo "Environment: $ENV"
+                    java --version
+                    git --version
+                    python3 --version
+                '''
             }
         }
 
         stage('Test') {
             steps {
                 sh '''
-                    echo "Running tests..."
+                    echo "Running Python tests..."
                     python3 test.py
                 '''
             }
@@ -46,18 +48,12 @@ pipeline {
                 )]) {
 
                     sh '''
-                        echo "Logging into Docker Hub..."
-
                         echo "$DOCKER_PASSWORD" | docker login \
                             -u "$DOCKER_USERNAME" \
                             --password-stdin
 
-                        echo "Tagging Docker image..."
-
                         docker tag myproject:latest \
                             $DOCKER_USERNAME/myproject:latest
-
-                        echo "Pushing image to Docker Hub..."
 
                         docker push \
                             $DOCKER_USERNAME/myproject:latest
@@ -83,7 +79,7 @@ pipeline {
                             -u "$DOCKER_USERNAME" \
                             --password-stdin
 
-                        echo "Pulling latest image from Docker Hub..."
+                        echo "Pulling latest image..."
 
                         docker pull \
                             $DOCKER_USERNAME/myproject:latest
@@ -91,9 +87,6 @@ pipeline {
                         echo "Stopping old container..."
 
                         docker stop myproject-container || true
-
-                        echo "Removing old container..."
-
                         docker rm myproject-container || true
 
                         echo "Starting new container..."
@@ -103,22 +96,38 @@ pipeline {
                             -p 5001:5001 \
                             $DOCKER_USERNAME/myproject:latest
 
-                        echo "Deployment completed successfully!"
-
                         docker logout
                     '''
                 }
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                sh '''
+                    echo "Waiting for application to start..."
+                    sleep 5
+
+                    echo "Checking application health..."
+
+                    curl --fail http://localhost:5001
+
+                    echo ""
+                    echo "Health Check PASSED!"
+                    echo "Application is running successfully."
+                '''
             }
         }
     }
 
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'CI/CD Pipeline completed successfully!'
         }
 
         failure {
-            echo 'Pipeline failed!'
+            echo 'CI/CD Pipeline failed!'
+            echo 'Check the failed stage for details.'
         }
     }
 }
