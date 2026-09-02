@@ -53,13 +53,18 @@ stage('Docker Push') {
 	}
 
         stage('Deploy') {
-            steps {
-                sh 'echo "Deploying $APP_NAME to $ENV"'
-            }
-        }
+    steps {
+        sh '''
+            docker stop myproject-container || true
+            docker rm myproject-container || true
+
+            docker run -d \
+              --name myproject-container \
+              -p 5001:5001 \
+              myproject
+        '''
     }
 }
-
         
             
                 
