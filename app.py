@@ -17,7 +17,7 @@ class MyHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    server = HTTPServer(("0.0.0.0", 5001), MyHandler)
+    server = HTTPServer(("0.0.0.0", 5002), MyHandler)
 
     print("MyProject server is running on port 5001")
 
