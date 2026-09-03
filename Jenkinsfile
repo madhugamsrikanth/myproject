@@ -4,6 +4,9 @@ pipeline {
     environment {
         APP_NAME = 'myproject'
         ENV = 'dev'
+        CONTAINER_NAME = 'myproject-container'
+        IMAGE_NAME = 'myproject'
+        DOCKER_REPO = 'srikanthmadhugam/myproject'
     }
 
     stages {
@@ -13,6 +16,7 @@ pipeline {
                 sh '''
                     echo "Building $APP_NAME"
                     echo "Environment: $ENV"
+
                     java --version
                     git --version
                     python3 --version
@@ -33,8 +37,9 @@ pipeline {
             steps {
                 sh '''
                     echo "Building Docker image..."
-                    docker --version
-                    docker build -t myproject:latest .
+
+                    docker build \
+                        -t $IMAGE_NAME:latest .
                 '''
             }
         }
@@ -52,15 +57,43 @@ pipeline {
                             -u "$DOCKER_USERNAME" \
                             --password-stdin
 
-                        docker tag myproject:latest \
-                            $DOCKER_USERNAME/myproject:latest
+                        docker tag \
+                            $IMAGE_NAME:latest \
+                            $DOCKER_REPO:latest
 
                         docker push \
-                            $DOCKER_USERNAME/myproject:latest
+                            $DOCKER_REPO:latest
 
                         docker logout
                     '''
                 }
+            }
+        }
+
+        stage('Backup Current Container') {
+            steps {
+                sh '''
+                    echo "Checking current container..."
+
+                    if docker ps -a --format '{{.Names}}' | grep -q "^$CONTAINER_NAME$"; then
+
+                        echo "Saving current image for rollback..."
+
+                        CURRENT_IMAGE=$(docker inspect \
+                            --format='{{.Config.Image}}' \
+                            $CONTAINER_NAME)
+
+                        echo "$CURRENT_IMAGE" > previous_image.txt
+
+                        echo "Previous image: $CURRENT_IMAGE"
+
+                    else
+
+                        echo "No previous container found."
+
+                        echo "none" > previous_image.txt
+                    fi
+                '''
             }
         }
 
@@ -73,28 +106,26 @@ pipeline {
                 )]) {
 
                     sh '''
-                        echo "Logging into Docker Hub..."
-
                         echo "$DOCKER_PASSWORD" | docker login \
                             -u "$DOCKER_USERNAME" \
                             --password-stdin
 
                         echo "Pulling latest image..."
 
-                        docker pull \
-                            $DOCKER_USERNAME/myproject:latest
+                        docker pull $DOCKER_REPO:latest
 
                         echo "Stopping old container..."
 
-                        docker stop myproject-container || true
-                        docker rm myproject-container || true
+                        docker stop $CONTAINER_NAME || true
+
+                        docker rm $CONTAINER_NAME || true
 
                         echo "Starting new container..."
 
                         docker run -d \
-                            --name myproject-container \
+                            --name $CONTAINER_NAME \
                             -p 5001:5001 \
-                            $DOCKER_USERNAME/myproject:latest
+                            $DOCKER_REPO:latest
 
                         docker logout
                     '''
@@ -104,30 +135,70 @@ pipeline {
 
         stage('Health Check') {
             steps {
-                sh '''
-                    echo "Waiting for application to start..."
-                    sleep 5
+                script {
+                    try {
+                        sh '''
+                            echo "Waiting for application..."
+                            sleep 5
 
-                    echo "Checking application health..."
+                            echo "Checking application health..."
 
-                    curl --fail http://localhost:5001
+                            curl --fail \
+                                http://localhost:5001
 
-                    echo ""
-                    echo "Health Check PASSED!"
-                    echo "Application is running successfully."
-                '''
+                            echo ""
+                            echo "Health Check PASSED!"
+                        '''
+
+                    } catch (Exception e) {
+
+                        echo "Health Check FAILED!"
+                        echo "Starting rollback..."
+
+                        sh '''
+                            docker stop $CONTAINER_NAME || true
+                            docker rm $CONTAINER_NAME || true
+
+                            PREVIOUS_IMAGE=$(cat previous_image.txt)
+
+                            if [ "$PREVIOUS_IMAGE" != "none" ]; then
+
+                                echo "Restoring previous image..."
+
+                                docker run -d \
+                                    --name $CONTAINER_NAME \
+                                    -p 5001:5001 \
+                                    $PREVIOUS_IMAGE
+
+                                echo "Rollback completed."
+
+                            else
+
+                                echo "No previous version available for rollback."
+
+                            fi
+                        '''
+
+                        error("Deployment failed. Rollback completed.")
+                    }
+                }
             }
         }
     }
 
     post {
         success {
-            echo 'CI/CD Pipeline completed successfully!'
+            echo "================================="
+            echo "Deployment SUCCESSFUL"
+            echo "Application is healthy"
+            echo "================================="
         }
 
         failure {
-            echo 'CI/CD Pipeline failed!'
-            echo 'Check the failed stage for details.'
+            echo "================================="
+            echo "Deployment FAILED"
+            echo "Rollback was attempted"
+            echo "================================="
         }
     }
 }
