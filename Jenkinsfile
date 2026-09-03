@@ -7,7 +7,9 @@ pipeline {
         CONTAINER_NAME = 'myproject-container'
         IMAGE_NAME = 'myproject'
         DOCKER_REPO = 'srikanthmadhugam/myproject'
-    }
+	IMAGE_TAG = "build-${BUILD_NUMBER}"   
+
+ }
 
     stages {
 
