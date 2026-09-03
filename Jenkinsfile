@@ -5,7 +5,7 @@ pipeline {
         APP_NAME = 'myproject'
         ENV = 'dev'
         CONTAINER_NAME = 'myproject-container'
-        DOCKER_REPO = 'srikanthmadhukam/myproject'
+        DOCKER_REPO = 'srikanthmadhugam/myproject'
         IMAGE_TAG = "build-${BUILD_NUMBER}"
     }
 
